@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const Contatos());
@@ -14,6 +16,24 @@ class Contato {
     required this.email,
     required this.telefone,
   });
+
+  // Método para converter um mapa em um Contato
+  factory Contato.fromJson(Map<String, dynamic> json) {
+    return Contato(
+      nome: json['nome'] ?? '',
+      email: json['email'] ?? '',
+      telefone: json['telefone'] ?? '',
+    );
+  }
+
+  // Método para converter o Contato em um mapa
+  Map<String, dynamic> toJson() {
+    return {
+      'nome': nome,
+      'email': email,
+      'telefone': telefone,
+    };
+  }
 }
 
 class Contatos extends StatefulWidget {
@@ -24,21 +44,44 @@ class Contatos extends StatefulWidget {
 }
 
 class _ContatosState extends State<Contatos> {
-  List<Contato> contatos = [
+  late List<Contato> contatos;
 
-  ];
+  @override
+  void initState() {
+    super.initState();
+    loadContatos();
+  }
 
-  void atualizarContato(Contato contato, String novoNome, String novoEmail, String novoTelefone) {
+  Future<void> loadContatos() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String contatosJson = prefs.getString('contatos') ?? '[]';
+    setState(() {
+      contatos = (json.decode(contatosJson) as List)
+          .map((item) => Contato.fromJson(item))
+          .toList();
+    });
+  }
+
+  void saveContatos() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String contatosJson = json.encode(contatos);
+    await prefs.setString('contatos', contatosJson);
+  }
+
+  void atualizarContato(
+      Contato contato, String novoNome, String novoEmail, String novoTelefone) {
     setState(() {
       contato.nome = novoNome;
       contato.email = novoEmail;
       contato.telefone = novoTelefone;
+      saveContatos(); // Salva os contatos após a atualização
     });
   }
 
   void adicionarNovoContato(String nome, String email, String telefone) {
     setState(() {
       contatos.add(Contato(nome: nome, email: email, telefone: telefone));
+      saveContatos(); // Salva os contatos após a adição
     });
   }
 
