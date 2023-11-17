@@ -1,11 +1,12 @@
+import 'package:contatos/Contatos.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const FigmaToCodeApp());
+  runApp(const Telainicial());
 }
 
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({Key? key}) : super(key: key);
+class Telainicial extends StatelessWidget {
+  const Telainicial({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,15 +15,17 @@ class FigmaToCodeApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
       ),
       home: Scaffold(
-        body: ListView(children: [
-          Contatos(),
+        body: ListView(children: const [
+          icone(),
         ]),
       ),
     );
   }
 }
 
-class Contatos extends StatelessWidget {
+class icone extends StatelessWidget {
+  const icone({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -50,40 +53,19 @@ class Contatos extends StatelessWidget {
               ),
               Positioned(
                 left: 59,
-                top: 400,
-                child: ElevatedButton(
-                  onPressed: () {
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    primary: Color.fromARGB(255, 255, 255, 255),
-                    minimumSize: Size(242, 65),
-                  ),
-                  child: const Text(
-                    'Novo Contato',
-                    style: TextStyle(
-                      color: Color(0xFF73007D),
-                      fontSize: 24,
-                      fontFamily: 'Koulen',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 59,
                 top: 487,
                 child: ElevatedButton(
                   onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Contatos())
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
-                    ),
-                    primary: Color.fromARGB(255, 242, 242, 242),
-                    minimumSize: Size(242, 57),
+                    ), backgroundColor: const Color.fromARGB(255, 242, 242, 242),
+                    minimumSize: const Size(242, 57),
                   ),
                   child: const Text(
                     'Contatos',
