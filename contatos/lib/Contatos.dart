@@ -17,7 +17,6 @@ class Contato {
     required this.telefone,
   });
 
-  // Método para converter um mapa em um Contato
   factory Contato.fromJson(Map<String, dynamic> json) {
     return Contato(
       nome: json['nome'] ?? '',
@@ -26,7 +25,6 @@ class Contato {
     );
   }
 
-  // Método para converter o Contato em um mapa
   Map<String, dynamic> toJson() {
     return {
       'nome': nome,
@@ -70,18 +68,45 @@ class _ContatosState extends State<Contatos> {
 
   void atualizarContato(
       Contato contato, String novoNome, String novoEmail, String novoTelefone) {
+    if (novoEmail.isNotEmpty && !novoEmail.contains('@')) {
+      _mostrarErro("Email inválido. Certifique-se de incluir '@'.");
+      return;
+    }
+
+    if (novoTelefone.isNotEmpty && !RegExp(r'^\d{2}\d{8,9}$').hasMatch(novoTelefone)) {
+      _mostrarErro("Telefone inválido. Certifique-se de incluir DDD e apenas números.");
+      return;
+    }
+
     setState(() {
-      contato.nome = novoNome;
+      contato.nome = novoNome.isNotEmpty ? novoNome : 'Untitled';
       contato.email = novoEmail;
       contato.telefone = novoTelefone;
-      saveContatos(); // Salva os contatos após a atualização
+      saveContatos();
     });
   }
 
   void adicionarNovoContato(String nome, String email, String telefone) {
+    if (email.isNotEmpty && !email.contains('@')) {
+      _mostrarErro("Email inválido. Certifique-se de incluir '@'.");
+      return;
+    }
+
+    if (telefone.isNotEmpty && !RegExp(r'^\d{2}\d{8,9}$').hasMatch(telefone)) {
+      _mostrarErro("Telefone inválido. Certifique-se de incluir DDD e apenas números.");
+      return;
+    }
+
     setState(() {
-      contatos.add(Contato(nome: nome, email: email, telefone: telefone));
-      saveContatos(); // Salva os contatos após a adição
+      contatos.add(Contato(nome: nome.isNotEmpty ? nome : 'Untitled', email: email, telefone: telefone));
+      saveContatos();
+    });
+  }
+
+  void apagarContato(Contato contato) {
+    setState(() {
+      contatos.remove(contato);
+      saveContatos();
     });
   }
 
@@ -109,6 +134,7 @@ class _ContatosState extends State<Contatos> {
             return ContatoItem(
               contato: contatos[index],
               onUpdate: atualizarContato,
+              onDelete: apagarContato,
             );
           },
         ),
@@ -117,7 +143,8 @@ class _ContatosState extends State<Contatos> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CadastroContato(adicionarContato: adicionarNovoContato),
+                builder: (context) =>
+                    CadastroContato(adicionarContato: adicionarNovoContato),
               ),
             );
           },
@@ -126,58 +153,130 @@ class _ContatosState extends State<Contatos> {
       ),
     );
   }
+
+  void _mostrarErro(String mensagem) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Erro"),
+          content: Text(mensagem),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class ContatoItem extends StatelessWidget {
   final Contato contato;
   final Function(Contato, String, String, String) onUpdate;
+  final Function(Contato) onDelete;
 
   const ContatoItem({
     required this.contato,
     required this.onUpdate,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        contato.nome,
-        style: const TextStyle(
-          color: Color(0xFF6B007D),
-          fontSize: 16,
-          fontFamily: 'Koulen',
-          fontWeight: FontWeight.w400,
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: ListTile(
+        title: Text(
+          contato.nome,
+          style: const TextStyle(
+            color: Color(0xFF6B007D),
+            fontSize: 16,
+            fontFamily: 'Koulen',
+            fontWeight: FontWeight.w400,
+          ),
         ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            contato.email,
-            style: const TextStyle(
-              color: Color(0xFF6B007D),
-              fontSize: 14,
-              fontFamily: 'Koulen',
-              fontWeight: FontWeight.w400,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              contato.email,
+              style: const TextStyle(
+                color: Color(0xFF6B007D),
+                fontSize: 14,
+                fontFamily: 'Koulen',
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-          Text(
-            contato.telefone,
-            style: const TextStyle(
-              color: Color(0xFF6B007D),
-              fontSize: 14,
-              fontFamily: 'Koulen',
-              fontWeight: FontWeight.w400,
+            Text(
+              contato.telefone,
+              style: const TextStyle(
+                color: Color(0xFF6B007D),
+                fontSize: 14,
+                fontFamily: 'Koulen',
+                fontWeight: FontWeight.w400,
+              ),
             ),
+          ],
+        ),
+        leading: Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
           ),
-        ],
+          child: const Icon(Icons.person),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete),
+          onPressed: () {
+            _showDeleteConfirmationDialog(context);
+          },
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  EditarContato(contato: contato, onUpdate: onUpdate),
+            ),
+          );
+        },
       ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditarContato(contato: contato, onUpdate: onUpdate),
-          ),
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirmar exclusão"),
+          content: const Text("Tem certeza que deseja apagar este contato?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Não"),
+            ),
+            TextButton(
+              onPressed: () {
+                onDelete(contato);
+                Navigator.of(context).pop();
+              },
+              child: const Text("Sim"),
+            ),
+          ],
         );
       },
     );
@@ -256,7 +355,7 @@ class _EditarContatoState extends State<EditarContato> {
                   _emailController.text,
                   _telefoneController.text,
                 );
-                Navigator.pop(context); // Fecha a tela de edição
+                Navigator.pop(context);
               },
               child: const Text('Salvar'),
             ),
